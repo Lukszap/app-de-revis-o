@@ -6,7 +6,7 @@ from ninja import Schema
 
 class ReviewSubmit(Schema):
     card_id: UUID
-    quality: int  # 0-5
+    button_pressed: int  # 1-4 (1=Errei, 2=Difícil, 3=Bom, 4=Fácil)
 
 
 class DueCardOut(Schema):
@@ -39,7 +39,7 @@ class StudyStats(Schema):
 
 class OfflineReview(Schema):
     card_id: UUID
-    quality: int
+    button_pressed: int  # 1-4 (Errei, Difícil, Bom, Fácil)
     reviewed_at: datetime
 
 

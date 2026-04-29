@@ -28,7 +28,7 @@ export default function AppLayout({
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: Home },
     { href: '/estudar', label: 'Estudar', icon: BookOpen },
-    { href: '/decks', label: 'Meus Decks', icon: Layers },
+    { href: '/meus-decks', label: 'Meus Decks', icon: Layers },
   ]
 
   const isActive = (href: string) => pathname === href

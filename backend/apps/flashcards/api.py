@@ -1,6 +1,9 @@
+from datetime import date, timedelta
+
 from ninja import Router
 from ninja.errors import HttpError
 
+from apps.estudos.models import Review
 from apps.usuarios.models import User
 from core.auth import JWTAuth
 
@@ -153,6 +156,23 @@ def create_card(request, deck_id: str, data: CardCreate):
         front=data.front,
         back=data.back,
     )
+    
+    # Criar Review inicial - card novo só aparece para revisão amanhã
+    try:
+        Review.objects.create(
+            user=user,
+            card=card,
+            quality=0,  # Ainda não estudado
+            easiness=2.5,
+            interval=0,
+            repetitions=0,
+            next_review=date.today() + timedelta(days=1),  # Disponível amanhã
+            synced=True,
+        )
+        print(f"[DEBUG] Review criado para card {card.id} - revisão amanhã")
+    except Exception as e:
+        print(f"[DEBUG] ERRO ao criar Review: {e}")
+    
     return CardOut(
         id=card.id,
         deck_id=deck.id,

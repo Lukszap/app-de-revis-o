@@ -13,6 +13,7 @@ export interface Deck {
   is_public: boolean
   color: string
   card_count?: number
+  created_at?: string
 }
 
 export interface Card {

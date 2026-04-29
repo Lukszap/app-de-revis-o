@@ -74,9 +74,9 @@ try {
 }
 
 # 7. Submeter review
-Write-Host "`n[7] Submeter review (quality=4)..."
+Write-Host "`n[7] Submeter review (button_pressed=3 - Botão 'Bom')..."
 try {
-    $reviewBody = @{card_id=$CARD_ID; quality=4} | ConvertTo-Json
+    $reviewBody = @{card_id=$CARD_ID; button_pressed=3} | ConvertTo-Json
     $REVIEW = Invoke-RestMethod -Uri "$BASE/study/review" -Method POST -ContentType "application/json" -Body $reviewBody -Headers @{Authorization="Bearer $TOKEN"}
     Write-Host "OK: review salva (interval=$($REVIEW.interval), next_review=$($REVIEW.next_review))"
 } catch {

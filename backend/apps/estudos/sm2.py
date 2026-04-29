@@ -43,26 +43,20 @@ def calculate_sm2(quality: int, easiness: float, interval: int, repetitions: int
 
 
 def get_due_cards(user_id: UUID) -> QuerySet:
-    """Retorna cards devidos para revisão hoje ou atrasados."""
+    """Retorna cards devidos para revisão hoje ou atrasados (já estudados antes)."""
     today = date.today()
     return Review.objects.filter(
         user_id=user_id,
-        next_review__lte=today
+        next_review__lte=today,
+        repetitions__gt=0  # Só cards já estudados antes
     ).select_related('card', 'card__deck')
 
 
 def get_new_cards(user_id: UUID, limit: int = 20) -> QuerySet:
-    """Retorna cards novos que ainda não foram revisados."""
-    from apps.flashcards.models import Card
-
-    # Cards que já têm review
-    reviewed_card_ids = Review.objects.filter(
-        user_id=user_id
-    ).values_list('card_id', flat=True)
-
-    # Cards novos (ainda não revisados)
-    return Card.objects.filter(
-        deck__owner_id=user_id
-    ).exclude(
-        id__in=reviewed_card_ids
-    )[:limit]
+    """Retorna cards novos que ainda não foram revisados (repetitions=0)."""
+    today = date.today()
+    return Review.objects.filter(
+        user_id=user_id,
+        repetitions=0,  # Nunca estudados
+        next_review__lte=today  # Disponíveis hoje
+    ).select_related('card', 'card__deck')[:limit]

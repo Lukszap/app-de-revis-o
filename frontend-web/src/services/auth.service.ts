@@ -24,22 +24,22 @@ export interface RefreshResponse {
 
 export const authService = {
   async login(data: LoginData): Promise<AuthResponse> {
-    const response = await api.post<AuthResponse>('/auth/login/', data)
+    const response = await api.post<AuthResponse>('/auth/login', data)
     return response.data
   },
 
   async register(data: RegisterData): Promise<AuthResponse> {
-    const response = await api.post<AuthResponse>('/auth/register/', data)
+    const response = await api.post<AuthResponse>('/auth/register', data)
     return response.data
   },
 
   async me(): Promise<User> {
-    const response = await api.get<User>('/auth/me/')
+    const response = await api.get<User>('/auth/me')
     return response.data
   },
 
   async refresh(refresh_token: string): Promise<RefreshResponse> {
-    const response = await api.post<RefreshResponse>('/auth/refresh/', {
+    const response = await api.post<RefreshResponse>('/auth/refresh', {
       refresh: refresh_token,
     })
     return response.data

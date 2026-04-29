@@ -128,7 +128,7 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-gray-900">Meus Decks</h2>
           <Link
-            href="/decks/novo"
+            href="/novo-deck"
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
           >
             <Plus className="w-4 h-4" />
@@ -165,7 +165,7 @@ export default function DashboardPage() {
             <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-600 mb-2">Você ainda não tem decks</p>
             <Link
-              href="/decks/novo"
+              href="/novo-deck"
               className="text-blue-600 hover:text-blue-700 font-medium"
             >
               Crie seu primeiro deck

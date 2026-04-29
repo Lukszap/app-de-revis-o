@@ -12,10 +12,10 @@ interface FlashCardProps {
 }
 
 const DIFFICULTY_OPTIONS = [
-  { value: 0, label: 'Errei', color: 'bg-red-500 hover:bg-red-600', sublabel: 'ver amanhã' },
-  { value: 1, label: 'Difícil', color: 'bg-orange-500 hover:bg-orange-600', sublabel: 'em breve' },
-  { value: 2, label: 'Bom', color: 'bg-green-500 hover:bg-green-600', sublabel: 'lembrei' },
-  { value: 3, label: 'Fácil', color: 'bg-blue-500 hover:bg-blue-600', sublabel: 'dominei' },
+  { value: 1, label: 'Errei', color: 'bg-red-500 hover:bg-red-600', sublabel: 'ver amanhã' },
+  { value: 2, label: 'Difícil', color: 'bg-orange-500 hover:bg-orange-600', sublabel: 'em breve' },
+  { value: 3, label: 'Bom', color: 'bg-green-500 hover:bg-green-600', sublabel: 'lembrei' },
+  { value: 4, label: 'Fácil', color: 'bg-blue-500 hover:bg-blue-600', sublabel: 'dominei' },
 ]
 
 export function FlashCard({ card, onReview, onNext }: FlashCardProps) {
@@ -29,10 +29,10 @@ export function FlashCard({ card, onReview, onNext }: FlashCardProps) {
     }
   }
 
-  const handleReview = async (quality: number) => {
+  const handleReview = async (button_pressed: number) => {
     setIsSubmitting(true)
     try {
-      const reviewResult = await studyService.submitReview(card.card_id, quality)
+      const reviewResult = await studyService.submitReview(card.card_id, button_pressed)
       setResult(reviewResult)
       onReview(reviewResult)
       
@@ -53,18 +53,20 @@ export function FlashCard({ card, onReview, onNext }: FlashCardProps) {
     <div className="w-full max-w-xl mx-auto">
       {/* Card with flip animation */}
       <div 
-        className="relative h-80 cursor-pointer perspective-1000"
+        className="relative h-80 cursor-pointer"
+        style={{ perspective: '1000px' }}
         onClick={handleFlip}
       >
         <div 
-          className={`relative w-full h-full transition-transform duration-500 transform-style-3d ${
-            isFlipped ? 'rotate-y-180' : ''
-          }`}
-          style={{ transformStyle: 'preserve-3d' }}
+          className="relative w-full h-full transition-transform duration-500"
+          style={{ 
+            transformStyle: 'preserve-3d',
+            transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)'
+          }}
         >
           {/* Front */}
           <div 
-            className="absolute inset-0 bg-white rounded-2xl shadow-lg border border-gray-200 p-8 flex flex-col backface-hidden"
+            className="absolute inset-0 bg-white rounded-2xl shadow-lg border border-gray-200 p-8 flex flex-col"
             style={{ backfaceVisibility: 'hidden' }}
           >
             <div className="flex-1 flex flex-col items-center justify-center">
@@ -78,7 +80,7 @@ export function FlashCard({ card, onReview, onNext }: FlashCardProps) {
 
           {/* Back */}
           <div 
-            className="absolute inset-0 bg-gray-50 rounded-2xl shadow-lg border border-gray-200 p-8 flex flex-col rotate-y-180 backface-hidden"
+            className="absolute inset-0 bg-gray-50 rounded-2xl shadow-lg border border-gray-200 p-8 flex flex-col"
             style={{ 
               backfaceVisibility: 'hidden',
               transform: 'rotateY(180deg)'

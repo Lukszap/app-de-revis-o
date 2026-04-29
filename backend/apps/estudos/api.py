@@ -59,12 +59,45 @@ def get_due(request):
     return result
 
 
+@router.get('/new', response=list[DueCardOut], auth=JWTAuth())
+def get_new(request):
+    """Retorna cards novos (nunca estudados) disponíveis para aprender hoje."""
+    user: User = request.auth
+    reviews = get_new_cards(user.id)
+    
+    result = []
+    for review in reviews:
+        result.append(DueCardOut(
+            id=review.id,
+            card_id=review.card.id,
+            front=review.card.front,
+            back=review.card.back,
+            deck_id=review.card.deck.id,
+            deck_title=review.card.deck.title,
+            easiness=review.easiness,
+            interval=review.interval,
+            repetitions=review.repetitions,
+            next_review=review.next_review,
+        ))
+    return result
+
+
 @router.post('/review', response=ReviewResult, auth=JWTAuth())
 def submit_review(request, data: ReviewSubmit):
     user: User = request.auth
     
-    if not 0 <= data.quality <= 5:
-        raise HttpError(400, 'Quality deve estar entre 0 e 5')
+    # Adapter pattern: mapeia button_pressed (1-4) para quality (0-5)
+    BUTTON_TO_QUALITY = {
+        1: 1,  # Errei -> quality 1 (zera repetições)
+        2: 2,  # Difícil -> quality 2 (mantém/diminui facilidade)
+        3: 4,  # Bom -> quality 4 (resposta padrão, aumenta intervalo)
+        4: 5,  # Fácil -> quality 5 (aumenta bastante facilidade e intervalo)
+    }
+    
+    if data.button_pressed not in BUTTON_TO_QUALITY:
+        raise HttpError(400, 'button_pressed deve ser 1, 2, 3 ou 4')
+    
+    quality = BUTTON_TO_QUALITY[data.button_pressed]
     
     try:
         card = Card.objects.get(id=data.card_id)
@@ -75,53 +108,57 @@ def submit_review(request, data: ReviewSubmit):
     if card.deck.owner != user and not card.deck.is_public:
         raise HttpError(403, 'Sem permissão')
     
-    # Busca review existente desse card para esse usuário
-    review = Review.objects.filter(user=user, card=card).first()
-
-    if review:
-        # Já revisou antes — aplica SM-2 sobre os valores anteriores
-        sm2_result = calculate_sm2(
-            quality=data.quality,
-            easiness=review.easiness,
-            interval=review.interval,
-            repetitions=review.repetitions,
-        )
-        review.quality = data.quality
-        review.easiness = sm2_result['easiness']
-        review.interval = sm2_result['interval']
-        review.repetitions = sm2_result['repetitions']
-        review.next_review = sm2_result['next_review']
-        review.synced = True
-        review.save()
-        result = sm2_result
-    else:
-        # Primeira revisão desse card
-        sm2_result = calculate_sm2(
-            quality=data.quality,
-            easiness=2.5,
-            interval=1,
-            repetitions=0,
-        )
-        review = Review.objects.create(
-            user=user,
-            card=card,
-            quality=data.quality,
-            easiness=sm2_result['easiness'],
-            interval=sm2_result['interval'],
-            repetitions=sm2_result['repetitions'],
-            next_review=sm2_result['next_review'],
-            synced=True,
-        )
-        result = sm2_result
+    # Busca review existente ou cria valores padrão
+    try:
+        review = Review.objects.get(user=user, card=card)
+        # Review existe - usar valores atuais
+        current_easiness = review.easiness
+        current_interval = review.interval
+        current_repetitions = review.repetitions
+    except Review.DoesNotExist:
+        # Review não existe - usar valores iniciais
+        review = None
+        current_easiness = 2.5
+        current_interval = 0
+        current_repetitions = 0
+    
+    print(f"[DEBUG] Button: {data.button_pressed} -> Quality: {quality}")
+    print(f"[DEBUG] Review existe: {review is not None}, Repetitions atual: {current_repetitions}")
+    
+    # Calcular SM-2
+    sm2_result = calculate_sm2(
+        quality=quality,
+        easiness=current_easiness,
+        interval=current_interval,
+        repetitions=current_repetitions,
+    )
+    
+    print(f"[DEBUG SM-2] Resultado: {sm2_result}")
+    
+    # Salvar usando update_or_create para evitar IntegrityError
+    review, created = Review.objects.update_or_create(
+        user=user,
+        card=card,
+        defaults={
+            'quality': quality,
+            'easiness': sm2_result['easiness'],
+            'interval': sm2_result['interval'],
+            'repetitions': sm2_result['repetitions'],
+            'next_review': sm2_result['next_review'],
+            'synced': True,
+        }
+    )
+    
+    print(f"[DEBUG] Review {'criado' if created else 'atualizado'} com sucesso")
     
     # Atualizar streak do usuário
     update_user_streak(user)
     
     return ReviewResult(
-        easiness=result['easiness'],
-        interval=result['interval'],
-        repetitions=result['repetitions'],
-        next_review=result['next_review'],
+        easiness=sm2_result['easiness'],
+        interval=sm2_result['interval'],
+        repetitions=sm2_result['repetitions'],
+        next_review=sm2_result['next_review'],
     )
 
 
@@ -153,6 +190,14 @@ def sync_offline(request, data: SyncInput):
     # Ordenar por data cronológica
     sorted_reviews = sorted(data.reviews, key=lambda r: r.reviewed_at)
     
+    # Adapter pattern para sync (mesmo mapeamento do submit_review)
+    BUTTON_TO_QUALITY = {
+        1: 1,  # Errei
+        2: 2,  # Difícil
+        3: 4,  # Bom
+        4: 5,  # Fácil
+    }
+    
     for review_data in sorted_reviews:
         try:
             card = Card.objects.get(id=review_data.card_id)
@@ -162,46 +207,45 @@ def sync_offline(request, data: SyncInput):
                 errors.append(f'Card {review_data.card_id}: sem permissão')
                 continue
             
-            if not 0 <= review_data.quality <= 5:
-                errors.append(f'Card {review_data.card_id}: quality inválida')
+            if review_data.button_pressed not in BUTTON_TO_QUALITY:
+                errors.append(f'Card {review_data.card_id}: button_pressed inválido')
                 continue
             
-            # Busca review existente
-            review = Review.objects.filter(user=user, card=card).first()
-
-            if review:
-                # Aplica SM-2 sobre valores anteriores
-                sm2_result = calculate_sm2(
-                    quality=review_data.quality,
-                    easiness=review.easiness,
-                    interval=review.interval,
-                    repetitions=review.repetitions,
-                )
-                review.quality = review_data.quality
-                review.easiness = sm2_result['easiness']
-                review.interval = sm2_result['interval']
-                review.repetitions = sm2_result['repetitions']
-                review.next_review = sm2_result['next_review']
-                review.synced = False
-                review.save()
-            else:
-                # Primeira revisão
-                sm2_result = calculate_sm2(
-                    quality=review_data.quality,
-                    easiness=2.5,
-                    interval=1,
-                    repetitions=0,
-                )
-                Review.objects.create(
-                    user=user,
-                    card=card,
-                    quality=review_data.quality,
-                    easiness=sm2_result['easiness'],
-                    interval=sm2_result['interval'],
-                    repetitions=sm2_result['repetitions'],
-                    next_review=sm2_result['next_review'],
-                    synced=False,
-                )
+            quality = BUTTON_TO_QUALITY[review_data.button_pressed]
+            
+            # Busca review existente ou cria valores padrão
+            try:
+                review = Review.objects.get(user=user, card=card)
+                current_easiness = review.easiness
+                current_interval = review.interval
+                current_repetitions = review.repetitions
+            except Review.DoesNotExist:
+                review = None
+                current_easiness = 2.5
+                current_interval = 0
+                current_repetitions = 0
+            
+            # Calcular SM-2
+            sm2_result = calculate_sm2(
+                quality=quality,
+                easiness=current_easiness,
+                interval=current_interval,
+                repetitions=current_repetitions,
+            )
+            
+            # Salvar usando update_or_create
+            Review.objects.update_or_create(
+                user=user,
+                card=card,
+                defaults={
+                    'quality': quality,
+                    'easiness': sm2_result['easiness'],
+                    'interval': sm2_result['interval'],
+                    'repetitions': sm2_result['repetitions'],
+                    'next_review': sm2_result['next_review'],
+                    'synced': False,
+                }
+            )
             
             processed += 1
             
