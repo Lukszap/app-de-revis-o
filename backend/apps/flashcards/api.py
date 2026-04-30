@@ -157,7 +157,7 @@ def create_card(request, deck_id: str, data: CardCreate):
         back=data.back,
     )
     
-    # Criar Review inicial - card novo só aparece para revisão amanhã
+    # Criar Review inicial - card novo disponível para revisão IMEDIATAMENTE
     try:
         Review.objects.create(
             user=user,
@@ -166,10 +166,10 @@ def create_card(request, deck_id: str, data: CardCreate):
             easiness=2.5,
             interval=0,
             repetitions=0,
-            next_review=date.today() + timedelta(days=1),  # Disponível amanhã
+            next_review=date.today(),  # Disponível HOJE (não amanhã)
             synced=True,
         )
-        print(f"[DEBUG] Review criado para card {card.id} - revisão amanhã")
+        print(f"[DEBUG] Review criado para card {card.id} - revisão disponível hoje")
     except Exception as e:
         print(f"[DEBUG] ERRO ao criar Review: {e}")
     

@@ -13,19 +13,32 @@ app de revisao/
 │   │   ├── flashcards/    # Decks e Cards
 │   │   └── estudos/       # Reviews com SM-2
 │   ├── core/              # Configurações Django
-│   │   ├── auth.py       # JWT tokens
-│   │   ├── api.py        # API principal
-│   │   └── settings/
 │   ├── workers/           # Celery tasks
 │   ├── manage.py
-│   ├── requirements.txt
-│   └── .env
-└── (frontend futuro)
+│   └── requirements.txt
+├── mobile/                 # Flutter app
+│   ├── lib/
+│   │   ├── main.dart
+│   │   ├── models/
+│   │   ├── services/
+│   │   ├── screens/
+│   │   └── widgets/
+│   ├── pubspec.yaml
+│   └── android/ios/       # Plataformas nativas
+└── frontend-web/           # Next.js 15
+    ├── src/
+    │   ├── app/          # App Router
+    │   ├── components/
+    │   └── services/
+    ├── package.json
+    └── next.config.mjs
 ```
 
 ## Tecnologias
 
 - **Backend**: Django 5, django-ninja, PostgreSQL (prod) / SQLite (dev)
+- **Mobile**: Flutter 3.29 + Dio + Provider
+- **Frontend Web**: Next.js 15 + React 19 + TailwindCSS + shadcn/ui
 - **Autenticação**: JWT com python-jose
 - **Algoritmo**: SM-2 (spaced repetition)
 - **Cache/Tasks**: Redis + Celery
@@ -70,6 +83,36 @@ docker-compose down -v
 - `db`: PostgreSQL na porta 5432
 - `redis`: Redis na porta 6379
 - `celery`: Worker de tarefas em background
+
+### Mobile (Flutter)
+
+```bash
+cd mobile
+
+# Instalar dependências
+flutter pub get
+
+# Rodar em modo debug
+flutter run
+
+# Ou em emulador específico
+flutter run -d emulator-5554
+```
+
+### Frontend Web (Next.js)
+
+```bash
+cd frontend-web
+
+# Instalar dependências
+npm install
+
+# Rodar em desenvolvimento
+npm run dev
+
+# Build de produção
+npm run build
+```
 
 ## API Endpoints
 

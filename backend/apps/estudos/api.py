@@ -82,6 +82,53 @@ def get_new(request):
     return result
 
 
+@router.get('/demo', response=list[DueCardOut], auth=JWTAuth())
+def get_demo_cards(request):
+    """Retorna cards de demonstração/teste sempre disponíveis."""
+    from uuid import uuid4
+    
+    # Cards de teste fixos
+    demo_cards = [
+        DueCardOut(
+            id=uuid4(),
+            card_id=uuid4(),
+            front='Qual a capital do Brasil? 🇧🇷',
+            back='Brasília',
+            deck_id=uuid4(),
+            deck_title='Demo - Geografia',
+            easiness=2.5,
+            interval=0,
+            repetitions=0,
+            next_review=date.today(),
+        ),
+        DueCardOut(
+            id=uuid4(),
+            card_id=uuid4(),
+            front='Quanto é 2 + 2? ➕',
+            back='4',
+            deck_id=uuid4(),
+            deck_title='Demo - Matemática',
+            easiness=2.5,
+            interval=0,
+            repetitions=0,
+            next_review=date.today(),
+        ),
+        DueCardOut(
+            id=uuid4(),
+            card_id=uuid4(),
+            front='O que é Flutter? 📱',
+            back='Um framework UI do Google para criar apps nativos',
+            deck_id=uuid4(),
+            deck_title='Demo - Tecnologia',
+            easiness=2.5,
+            interval=0,
+            repetitions=0,
+            next_review=date.today(),
+        ),
+    ]
+    return demo_cards
+
+
 @router.post('/review', response=ReviewResult, auth=JWTAuth())
 def submit_review(request, data: ReviewSubmit):
     user: User = request.auth

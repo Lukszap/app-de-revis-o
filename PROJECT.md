@@ -17,6 +17,29 @@ backend/
 └── workers/           # Celery tasks
 ```
 
+### Mobile (Flutter 3.29)
+```
+mobile/
+├── lib/
+│   ├── models/        # Models: Deck, Card, Review
+│   ├── services/      # API service, Auth service, Storage
+│   ├── screens/       # UI screens: Home, Decks, Study, Stats
+│   └── widgets/       # Componentes reutilizáveis
+├── android/           # Configuração Android
+└── ios/              # Configuração iOS
+```
+
+### Frontend Web (Next.js 15)
+```
+frontend-web/
+├── src/
+│   ├── app/           # App Router (Next.js 15)
+│   ├── components/    # UI components + shadcn/ui
+│   └── services/      # API integration
+├── public/           # Assets estáticos
+└── package.json      # React 19 + TailwindCSS
+```
+
 ### Algoritmo SM-2
 Implementação fiel ao algoritmo original de Piotr Wozniak:
 
@@ -76,17 +99,21 @@ docker-compose up --build
 
 ## 🛠️ Stack Tecnológica
 
-- **Framework**: Django 5.0 + django-ninja (REST)
-- **Database**: PostgreSQL (prod) / SQLite (dev)
-- **Cache/Queue**: Redis + Celery
-- **Auth**: JWT (python-jose)
-- **Container**: Docker + Docker Compose
+| Camada | Tecnologia |
+|--------|------------|
+| **Backend** | Django 5.0 + django-ninja (REST) |
+| **Mobile** | Flutter 3.29 + Dio + Provider |
+| **Frontend** | Next.js 15 + React 19 + TailwindCSS + shadcn/ui |
+| **Database** | PostgreSQL (prod) / SQLite (dev) |
+| **Cache/Queue** | Redis + Celery |
+| **Auth** | JWT (python-jose) |
+| **Container** | Docker + Docker Compose |
 
 ## 📁 Estrutura do Monorepo
 
 ```
 flashmind/
-├── backend/           # Django API
+├── backend/              # Django API
 │   ├── apps/
 │   │   ├── usuarios/
 │   │   ├── flashcards/
@@ -94,6 +121,20 @@ flashmind/
 │   ├── core/
 │   ├── requirements.txt
 │   └── Dockerfile
+├── mobile/               # Flutter App
+│   ├── lib/
+│   │   ├── models/
+│   │   ├── services/
+│   │   ├── screens/
+│   │   └── widgets/
+│   ├── pubspec.yaml
+│   └── android/ios/
+├── frontend-web/         # Next.js 15
+│   ├── src/
+│   │   ├── app/
+│   │   ├── components/
+│   │   └── services/
+│   └── package.json
 ├── docker-compose.yml
 └── README.md
 ```
